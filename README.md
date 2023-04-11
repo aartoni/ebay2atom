@@ -17,7 +17,7 @@ The executable can be found in `./target/release/ebay2atom`
 The filter script can be directly invoked from the Newsboat `urls` configuration file.
 
     # Example query
-    filter:~/.local/bin/ebay2atom:https://www.ebay.it/sch/i.html?_nkw=cool+gadget "Music" "~eBay 2.0"
+    filter:~/.local/bin/ebay2atom:https://www.ebay.com/sch/i.html?_nkw=cool+gadget "Gadgets" "~eBay"
 
 The above query would produce the following output.
 
