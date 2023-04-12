@@ -73,7 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .updated(update_time)
         .build();
 
-    // Get item selectors
+    // Get item selectors and regexes
     let title_selector = Selector::parse(TITLE_QUERY)?;
     let link_selector = Selector::parse(LINK_QUERY)?;
     let price_selector = Selector::parse(PRICE_QUERY)?;
@@ -82,6 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let purchase_options_selector = Selector::parse(PURCHASE_OPTIONS_QUERY)?;
     let ad_selector = Selector::parse(AD_QUERY)?;
     let items_selector = Selector::parse(ITEMS_QUERY)?;
+    let url_regex = Regex::new(r#"https.+(\d{10})"#)?;
 
     // Store the entries array
     let mut entries: Vec<Entry> = Vec::with_capacity(EBAY_SEARCH_RESULTS);
@@ -111,7 +112,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap()
             .value()
             .attr("href")
-            .unwrap()[..36];
+            .unwrap();
+
+        let url_captures = url_regex.captures(item_url).unwrap();
+        let item_url = url_captures.get(0).unwrap().as_str();
 
         let link = LinkBuilder::default()
             .rel("alternate".to_string())
@@ -122,7 +126,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         entry.set_links([link]);
 
         // Get IRI
-        let iri = &item_url[24..36];
+        let iri = url_captures.get(1).unwrap().as_str();
         entry.set_id(iri);
 
         // Get price
