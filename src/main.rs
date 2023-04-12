@@ -105,8 +105,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         entry.set_title(title);
 
-        // Get item URL (e.g. https://www.ebay.it/itm/111111111111, 36 characters)
-        let item_url = &item
+        // Get item link/id
+        let item_url = item
             .select(&link_selector)
             .next()
             .unwrap()
@@ -124,10 +124,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .build();
 
         entry.set_links([link]);
-
-        // Get IRI
-        let iri = url_captures.get(1).unwrap().as_str();
-        entry.set_id(iri);
+        entry.set_id(item_url);
 
         // Get price
         let price = item
