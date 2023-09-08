@@ -1,3 +1,4 @@
+use core::fmt::Write;
 use std::{
     io::{self, Read},
     time::SystemTime,
@@ -44,22 +45,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Get generator
     let generator = GeneratorBuilder::default()
-        .uri(Some(REPOSITORY.to_string()))
-        .version(Some(VERSION.to_string()))
-        .value(NAME.to_string())
+        .uri(Some(REPOSITORY.to_owned()))
+        .version(Some(VERSION.to_owned()))
+        .value(NAME.to_owned())
         .build();
 
     // Get links
-    let link = LinkBuilder::default()
-        .rel("alternate".to_string())
-        .mime_type(Some("text/html".to_string()))
-        .href(feed_link.to_string())
+    let feed_link = LinkBuilder::default()
+        .rel("alternate".to_owned())
+        .mime_type(Some("text/html".to_owned()))
+        .href(feed_link.to_owned())
         .build();
 
     // Get title
-    let title = TextBuilder::default()
+    let feed_title = TextBuilder::default()
         .r#type(TextType::Text)
-        .value(feed_title.to_string())
+        .value(feed_title.to_owned())
         .build();
 
     // Get local DateTime
@@ -68,8 +69,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Build feed (except entries)
     let mut feed = FeedBuilder::default()
         .generator(Some(generator))
-        .links(vec![link])
-        .title(title)
+        .links(vec![feed_link])
+        .title(feed_title)
         .updated(update_time)
         .build();
 
@@ -82,7 +83,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let purchase_options_selector = Selector::parse(PURCHASE_OPTIONS_QUERY)?;
     let ad_selector = Selector::parse(AD_QUERY)?;
     let items_selector = Selector::parse(ITEMS_QUERY)?;
-    let url_regex = Regex::new(r#"https.+(\d{10})"#)?;
+    let url_regex = Regex::new(r"https.+(\d{10})")?;
 
     // Store the entries array
     let mut entries: Vec<Entry> = Vec::with_capacity(EBAY_SEARCH_RESULTS);
@@ -91,8 +92,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for item in document.select(&items_selector) {
         let mut entry = Entry::default();
         let mut content = Content::default();
-        content.set_content_type(Some("xhtml".to_string()));
-        let mut description = r#"<div xmlns="http://www.w3.org/1999/xhtml">"#.to_string();
+        content.set_content_type(Some("xhtml".to_owned()));
+        let mut description = r#"<div xmlns="http://www.w3.org/1999/xhtml">"#.to_owned();
 
         // Get title
         let title = item
@@ -118,9 +119,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let item_url = url_captures.get(0).unwrap().as_str();
 
         let link = LinkBuilder::default()
-            .rel("alternate".to_string())
-            .mime_type(Some("text/html".to_string()))
-            .href(item_url.to_string())
+            .rel("alternate".to_owned())
+            .mime_type(Some("text/html".to_owned()))
+            .href(item_url.to_owned())
             .build();
 
         entry.set_links([link]);
@@ -135,30 +136,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .next()
             .unwrap();
 
-        description.push_str(&format!("<p>Price: {price}</p>"));
+        write!(description, "<p>Price: {price}</p>")?;
 
         // Get condition
         if let Some(condition) = item.select(&condition_selector).next() {
             let condition = condition.text().next().unwrap();
-            description.push_str(&format!("<p>Condition: {condition}</p>"));
+            write!(description, "<p>Condition: {condition}</p>")?;
         }
 
         // Get time left
         if let Some(time_left) = item.select(&time_left_selector).next() {
             let time_left = time_left.text().next().unwrap();
-            description.push_str(&format!("<p>Time left: {time_left}</p>"));
+            write!(description, "<p>Time left: {time_left}</p>")?;
         }
 
         // Get purchase options
         if let Some(purchase_options) = item.select(&purchase_options_selector).next() {
             let purchase_options = purchase_options.text().next().unwrap();
-            description.push_str(&format!("<p>Purchase options: {purchase_options}</p>"));
+            write!(description, "<p>Purchase options: {purchase_options}</p>")?;
         }
 
         // Get ad
         if let Some(ad) = item.select(&ad_selector).next() {
             let ad = ad.text().next().unwrap();
-            description.push_str(&format!("<p>Ad: {ad}</p>"));
+            write!(description, "<p>Ad: {ad}</p>")?;
         }
 
         // Finish and append entry
